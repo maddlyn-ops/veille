@@ -122,13 +122,7 @@
       "position": [
         1660,
         400
-      ],
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "REPLACE_WITH_CLAUDE_CREDENTIAL_ID",
-          "name": "Anthropic API key"
-        }
-      }
+      ]
     },
     {
       "parameters": {
@@ -158,13 +152,7 @@
       "position": [
         2060,
         400
-      ],
-      "credentials": {
-        "gmailOAuth2": {
-          "id": "REPLACE_WITH_GMAIL_CREDENTIAL_ID",
-          "name": "Gmail maddworkflow"
-        }
-      }
+      ]
     },
     {
       "parameters": {
@@ -185,12 +173,6 @@
         460,
         500
       ],
-      "credentials": {
-        "gmailOAuth2": {
-          "id": "REPLACE_WITH_GMAIL_CREDENTIAL_ID",
-          "name": "Gmail maddworkflow"
-        }
-      },
       "continueOnFail": true
     },
     {
@@ -250,12 +232,6 @@
         2440,
         300
       ],
-      "credentials": {
-        "gmailOAuth2": {
-          "id": "REPLACE_WITH_GMAIL_CREDENTIAL_ID",
-          "name": "Gmail maddworkflow"
-        }
-      },
       "continueOnFail": true
     }
   ],
