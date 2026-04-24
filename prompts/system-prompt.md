@@ -53,7 +53,7 @@ Format de sortie obligatoire : JSON strict, rien d'autre, pas de markdown, pas d
       "score": number,
       "resume": "string, 2 phrases max",
       "pourquoi": "string, 1 phrase",
-      "categorie": "design|discovery|product|ia|auto|signal_faible"
+      "categorie": "design|discovery|product|ia|automatisation|signal_faible"
     }
   ]
 }

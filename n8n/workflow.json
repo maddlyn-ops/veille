@@ -16,7 +16,10 @@
       "name": "Chaque matin 7h00",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
-      "position": [240, 300]
+      "position": [
+        240,
+        300
+      ]
     },
     {
       "parameters": {
@@ -26,7 +29,10 @@
       "name": "Liste des sources",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [460, 300]
+      "position": [
+        460,
+        300
+      ]
     },
     {
       "parameters": {
@@ -37,7 +43,10 @@
       "name": "Une ligne par source",
       "type": "n8n-nodes-base.splitOut",
       "typeVersion": 1,
-      "position": [680, 300]
+      "position": [
+        680,
+        300
+      ]
     },
     {
       "parameters": {
@@ -48,7 +57,10 @@
       "name": "Lire le flux RSS",
       "type": "n8n-nodes-base.rssFeedRead",
       "typeVersion": 1.2,
-      "position": [900, 300],
+      "position": [
+        900,
+        300
+      ],
       "continueOnFail": true
     },
     {
@@ -59,7 +71,10 @@
       "name": "Filtrer 24h + nettoyer",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1120, 300]
+      "position": [
+        1120,
+        300
+      ]
     },
     {
       "parameters": {
@@ -69,7 +84,10 @@
       "name": "Dédupliquer",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1340, 300]
+      "position": [
+        1340,
+        300
+      ]
     },
     {
       "parameters": {
@@ -92,7 +110,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"model\": \"claude-sonnet-4-6\",\n  \"max_tokens\": 4096,\n  \"temperature\": 0.3,\n  \"system\": \"Tu es l'assistant de veille personnel de Mad, product designer senior.\\n\\nSon périmètre d'intérêt :\\n- Product design & UX (recherche, interaction, systèmes de design)\\n- Discovery continue (à la Teresa Torres) : interviews, opportunity trees, hypothèses, tests\\n- Management produit : stratégie, frameworks, discovery/delivery\\n- IA appliquée au produit et au design : comment les LLM changent les méthodes, les outils, l'artisanat\\n- Automatisation : n8n, workflows, agents, productivité\\n\\nCe qui l'intéresse peu : tutoriels de code pur, actualité startup/levée de fonds, outils obscurs, contenu marketing.\\n\\nTa mission : pour chaque article reçu, attribuer un score 0-10, ne garder que >= 6, résumer en 2 phrases max en français, ajouter un 'pourquoi' en 1 phrase, classer dans : design | discovery | product | ia | auto | signal_faible.\\n\\nPuis écrire un édito de 3 phrases max, sobre, qui pointe le thème dominant du jour.\\n\\nFormat de sortie : JSON STRICT uniquement, aucun texte avant/après, aucun markdown. Schema :\\n{\\n  \\\"edito\\\": \\\"string\\\",\\n  \\\"date\\\": \\\"YYYY-MM-DD\\\",\\n  \\\"articles\\\": [{\\\"titre\\\": \\\"string\\\", \\\"url\\\": \\\"string\\\", \\\"source\\\": \\\"string\\\", \\\"score\\\": number, \\\"resume\\\": \\\"string\\\", \\\"pourquoi\\\": \\\"string\\\", \\\"categorie\\\": \\\"design|discovery|product|ia|auto|signal_faible\\\"}]\\n}\\n\\nRègles : max 15 articles, tri par score décroissant, pas d'emoji, pas de superlatif, résumés en français même si article en anglais. Si aucun article >= 6, articles: [] et édito honnête.\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": {{ JSON.stringify('Date du jour : ' + $json.date + '\\n\\nVoici ' + $json.nb + ' articles à analyser :\\n\\n' + JSON.stringify($json.articles, null, 2)) }}\n    }\n  ]\n}",
+        "jsonBody": "={\n  \"model\": \"claude-sonnet-4-6\",\n  \"max_tokens\": 4096,\n  \"temperature\": 0.3,\n  \"system\": \"Tu es l'assistant de veille personnel de Mad, product designer senior.\\n\\nSon périmètre d'intérêt :\\n- Product design & UX (recherche, interaction, design system)\\n- Discovery continue (à la Teresa Torres ou discovery discipline) : interviews, opportunity trees, hypothèses, tests, f.o.c.u.s.e.d.\\n- Management produit : stratégie, frameworks, discovery/delivery\\n- IA appliquée au produit et au design : comment les LLM changent les méthodes, les outils, l'artisanat\\n- Automatisation : n8n, workflows, agents, productivité\\n\\nCe qui l'intéresse peu :\\n- Tutoriels de code pur (sauf si l'angle est design/produit)\\n- Actualité startup/levée de fonds\\n- Outils obscurs sans adoption réelle\\n- Contenu marketing/promotionnel déguisé\\n\\nTa mission :\\nTu reçois une liste d'articles au format JSON (titre, URL, description, date, source).\\nPour CHAQUE article, tu fais :\\n1. Attribuer un score de pertinence de 0 à 10 pour Mad\\n2. Si score >= 6, écrire un résumé en 2 phrases maximum (en français, ton direct, pas de blabla)\\n3. Ajouter une mention \\\"Pourquoi ça t'intéresse :\\\" en 1 phrase, qui lie explicitement à son métier\\n4. Classer dans UNE des catégories suivantes :\\n   - \\\"design\\\" (product design, UX, UI, recherche)\\n   - \\\"discovery\\\" (discovery continue, interviews, tests, opportunity)\\n   - \\\"product\\\" (stratégie, management, frameworks produit)\\n   - \\\"ia\\\" (IA appliquée au produit/design)\\n   - \\\"automatisation\\\" (automatisation, n8n, workflows, agents)\\n   - \\\"signal_faible\\\" (hors périmètre mais intrigant, à surveiller)\\n\\nEnsuite tu écris un édito d'ouverture de 3 phrases maximum qui :\\n- pointe le thème dominant de la journée (si y en a un)\\n- fait une connexion entre plusieurs articles si tu en vois une pertinente\\n- reste sobre, pas de superlatifs, pas d'enthousiasme artificiel\\n\\nFormat de sortie obligatoire : JSON strict, rien d'autre, pas de markdown, pas de commentaire.\\n\\n{\\n  \\\"edito\\\": \\\"string, 3 phrases max\\\",\\n  \\\"date\\\": \\\"YYYY-MM-DD (la date d'aujourd'hui)\\\",\\n  \\\"articles\\\": [\\n    {\\n      \\\"titre\\\": \\\"string\\\",\\n      \\\"url\\\": \\\"string\\\",\\n      \\\"source\\\": \\\"string\\\",\\n      \\\"score\\\": number,\\n      \\\"resume\\\": \\\"string, 2 phrases max\\\",\\n      \\\"pourquoi\\\": \\\"string, 1 phrase\\\",\\n      \\\"categorie\\\": \\\"design|discovery|product|ia|automatisation|signal_faible\\\"\\n    }\\n  ]\\n}\\n\\nRègles strictes :\\n- Ne garde QUE les articles avec score >= 6\\n- Maximum 15 articles dans la sortie, trie par score décroissant\\n- Si deux articles traitent du même sujet, garde le meilleur et ignore l'autre\\n- Les résumés et le titre sont en français même si l'article est en anglais\\n- Jamais de \\\"dans cet article on apprend que...\\\" → direct à l'info\\n- Pas d'emoji, pas de superlatif type \\\"fascinant\\\", \\\"incroyable\\\"\\n- Parles lui directement, ne parle pas d'elle à la troisème personne : \\\"Ça peur interesser Madd\\\" → \\\"Ça peut t'interesser\\\"\\n- Parles de manière fluide et dans un français courant et correct\\n- Si aucun article ne mérite score >= 6, renvoie articles: [] et un édito qui le dit honnêtement\\n- Ne dit pas \\\"L'article parle de\\\" mais donne directement l'information interessante à savoir.\\n\\nTu peux ponctuellement glisser un avis personnel en une phrase si un article est particulièrement faible ou marquant.\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": {{ JSON.stringify('Date du jour : ' + $json.date + '\\n\\nVoici ' + $json.nb + ' articles à analyser :\\n\\n' + JSON.stringify($json.articles, null, 2)) }}\n    }\n  ]\n}",
         "options": {
           "timeout": 120000
         }
@@ -101,7 +119,10 @@
       "name": "Claude - Curation",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1560, 300],
+      "position": [
+        1560,
+        300
+      ],
       "credentials": {
         "httpHeaderAuth": {
           "id": "REPLACE_WITH_CLAUDE_CREDENTIAL_ID",
@@ -111,13 +132,16 @@
     },
     {
       "parameters": {
-        "jsCode": "// Parse la réponse Claude et construit l'email HTML\nconst reponse = $input.first().json;\nconst texte = reponse.content[0].text;\n\nlet data;\ntry {\n  data = JSON.parse(texte);\n} catch (e) {\n  // Si Claude a entouré le JSON de markdown, on nettoie\n  const clean = texte.replace(/^```(?:json)?\\s*/m, '').replace(/\\s*```\\s*$/m, '').trim();\n  data = JSON.parse(clean);\n}\n\nconst LABELS = {\n  design: 'Product design & UX',\n  discovery: 'Discovery',\n  product: 'Produit & stratégie',\n  ia: 'IA appliquée',\n  auto: 'Automatisation',\n  signal_faible: 'Signaux faibles'\n};\nconst ORDRE = ['discovery', 'design', 'product', 'ia', 'auto', 'signal_faible'];\n\nconst esc = s => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\"/g, '&quot;');\n\n// Regroupe par catégorie\nconst parCat = {};\nfor (const a of (data.articles || [])) {\n  if (!parCat[a.categorie]) parCat[a.categorie] = [];\n  parCat[a.categorie].push(a);\n}\n\n// Date lisible en français\nconst dateJour = new Date(data.date || new Date());\nconst dateLisible = dateJour.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });\nconst dateCourte = dateJour.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });\n\n// Construction des blocs catégorie\nlet blocs = '';\nfor (const cat of ORDRE) {\n  if (!parCat[cat] || parCat[cat].length === 0) continue;\n  blocs += `<div style=\"margin-top:24px;\">\n    <h2 style=\"margin:0 0 12px 0;font-size:14px;letter-spacing:1px;text-transform:uppercase;color:#1a1a1a;font-weight:700;border-bottom:2px solid #1a1a1a;padding-bottom:8px;\">${esc(LABELS[cat])}</h2>`;\n  for (const a of parCat[cat]) {\n    blocs += `<div style=\"margin:16px 0;padding-bottom:16px;border-bottom:1px solid #f0f0f0;\">\n      <a href=\"${esc(a.url)}\" style=\"text-decoration:none;color:#1a1a1a;\"><h3 style=\"margin:0;font-size:17px;line-height:1.3;font-weight:600;\">${esc(a.titre)}</h3></a>\n      <p style=\"margin:4px 0 0 0;font-size:12px;color:#8a8a8a;\">${esc(a.source)} · score ${a.score}/10</p>\n      <p style=\"margin:8px 0 0 0;font-size:14px;line-height:1.5;color:#3a3a3a;\">${esc(a.resume)}</p>\n      <p style=\"margin:8px 0 0 0;font-size:13px;line-height:1.5;color:#6a6a6a;\"><strong style=\"color:#b08968;\">Pourquoi :</strong> ${esc(a.pourquoi)}</p>\n      <a href=\"${esc(a.url)}\" style=\"display:inline-block;margin-top:8px;font-size:13px;color:#b08968;text-decoration:none;font-weight:600;\">Lire l'article →</a>\n    </div>`;\n  }\n  blocs += '</div>';\n}\n\nif (!blocs) {\n  blocs = '<p style=\"margin:24px 0;font-size:15px;color:#6a6a6a;\">Aucun article marquant ce matin. Journée calme dans la veille.</p>';\n}\n\nconst html = `<!DOCTYPE html><html lang=\"fr\"><head><meta charset=\"UTF-8\"><title>Ta veille du ${dateCourte}</title></head>\n<body style=\"margin:0;padding:0;background:#f5f3ef;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:#1a1a1a;\">\n<table role=\"presentation\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\" border=\"0\" style=\"background:#f5f3ef;\"><tr><td align=\"center\" style=\"padding:32px 16px;\">\n<table role=\"presentation\" width=\"600\" cellspacing=\"0\" cellpadding=\"0\" border=\"0\" style=\"max-width:600px;background:#ffffff;border-radius:12px;overflow:hidden;\">\n<tr><td style=\"padding:32px 32px 8px 32px;\">\n<p style=\"margin:0;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:#8a8a8a;font-weight:600;\">Veille du ${esc(dateLisible)}</p>\n<h1 style=\"margin:8px 0 0 0;font-size:28px;line-height:1.2;font-weight:700;color:#1a1a1a;\">Bonjour Mad ☕</h1>\n</td></tr>\n<tr><td style=\"padding:16px 32px 24px 32px;\">\n<p style=\"margin:0;font-size:16px;line-height:1.6;color:#3a3a3a;font-style:italic;border-left:3px solid #d4c4a8;padding-left:16px;\">${esc(data.edito || '')}</p>\n</td></tr>\n<tr><td style=\"padding:0 32px 16px 32px;\">${blocs}</td></tr>\n<tr><td style=\"padding:24px 32px 32px 32px;border-top:1px solid #eeeeee;\">\n<p style=\"margin:0;font-size:12px;color:#8a8a8a;line-height:1.5;\">Sélection générée par ton workflow n8n + Claude. Pour ajuster les sources ou le ton, édite le workflow dans n8n.</p>\n</td></tr></table></td></tr></table></body></html>`;\n\nreturn [{ json: { html, sujet: `Ta veille du ${dateCourte} — ${(data.articles || []).length} pépites` } }];"
+        "jsCode": "// Parse la réponse Claude et construit l'email HTML\nconst reponse = $input.first().json;\nconst texte = reponse.content[0].text;\n\nlet data;\ntry {\n  data = JSON.parse(texte);\n} catch (e) {\n  // Si Claude a entouré le JSON de markdown, on nettoie\n  const clean = texte.replace(/^```(?:json)?\\s*/m, '').replace(/\\s*```\\s*$/m, '').trim();\n  data = JSON.parse(clean);\n}\n\nconst LABELS = {\n  design: 'Product design & UX',\n  discovery: 'Discovery',\n  product: 'Produit & stratégie',\n  ia: 'IA appliquée',\n  automatisation: 'Automatisation',\n  signal_faible: 'Signaux faibles'\n};\nconst ORDRE = ['discovery', 'design', 'product', 'ia', 'automatisation', 'signal_faible'];\n\nconst esc = s => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\"/g, '&quot;');\n\n// Regroupe par catégorie\nconst parCat = {};\nfor (const a of (data.articles || [])) {\n  if (!parCat[a.categorie]) parCat[a.categorie] = [];\n  parCat[a.categorie].push(a);\n}\n\n// Date lisible en français\nconst dateJour = new Date(data.date || new Date());\nconst dateLisible = dateJour.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });\nconst dateCourte = dateJour.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });\n\n// Construction des blocs catégorie\nlet blocs = '';\nfor (const cat of ORDRE) {\n  if (!parCat[cat] || parCat[cat].length === 0) continue;\n  blocs += `<div style=\"margin-top:24px;\">\n    <h2 style=\"margin:0 0 12px 0;font-size:14px;letter-spacing:1px;text-transform:uppercase;color:#1a1a1a;font-weight:700;border-bottom:2px solid #1a1a1a;padding-bottom:8px;\">${esc(LABELS[cat])}</h2>`;\n  for (const a of parCat[cat]) {\n    blocs += `<div style=\"margin:16px 0;padding-bottom:16px;border-bottom:1px solid #f0f0f0;\">\n      <a href=\"${esc(a.url)}\" style=\"text-decoration:none;color:#1a1a1a;\"><h3 style=\"margin:0;font-size:17px;line-height:1.3;font-weight:600;\">${esc(a.titre)}</h3></a>\n      <p style=\"margin:4px 0 0 0;font-size:12px;color:#8a8a8a;\">${esc(a.source)} · score ${a.score}/10</p>\n      <p style=\"margin:8px 0 0 0;font-size:14px;line-height:1.5;color:#3a3a3a;\">${esc(a.resume)}</p>\n      <p style=\"margin:8px 0 0 0;font-size:13px;line-height:1.5;color:#6a6a6a;\"><strong style=\"color:#b08968;\">Pourquoi :</strong> ${esc(a.pourquoi)}</p>\n      <a href=\"${esc(a.url)}\" style=\"display:inline-block;margin-top:8px;font-size:13px;color:#b08968;text-decoration:none;font-weight:600;\">Lire l'article →</a>\n    </div>`;\n  }\n  blocs += '</div>';\n}\n\nif (!blocs) {\n  blocs = '<p style=\"margin:24px 0;font-size:15px;color:#6a6a6a;\">Aucun article marquant ce matin. Journée calme dans la veille.</p>';\n}\n\nconst html = `<!DOCTYPE html><html lang=\"fr\"><head><meta charset=\"UTF-8\"><title>Ta veille du ${dateCourte}</title></head>\n<body style=\"margin:0;padding:0;background:#f5f3ef;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:#1a1a1a;\">\n<table role=\"presentation\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\" border=\"0\" style=\"background:#f5f3ef;\"><tr><td align=\"center\" style=\"padding:32px 16px;\">\n<table role=\"presentation\" width=\"600\" cellspacing=\"0\" cellpadding=\"0\" border=\"0\" style=\"max-width:600px;background:#ffffff;border-radius:12px;overflow:hidden;\">\n<tr><td style=\"padding:32px 32px 8px 32px;\">\n<p style=\"margin:0;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:#8a8a8a;font-weight:600;\">Veille du ${esc(dateLisible)}</p>\n<h1 style=\"margin:8px 0 0 0;font-size:28px;line-height:1.2;font-weight:700;color:#1a1a1a;\">Bonjour Mad ☕</h1>\n</td></tr>\n<tr><td style=\"padding:16px 32px 24px 32px;\">\n<p style=\"margin:0;font-size:16px;line-height:1.6;color:#3a3a3a;font-style:italic;border-left:3px solid #d4c4a8;padding-left:16px;\">${esc(data.edito || '')}</p>\n</td></tr>\n<tr><td style=\"padding:0 32px 16px 32px;\">${blocs}</td></tr>\n<tr><td style=\"padding:24px 32px 32px 32px;border-top:1px solid #eeeeee;\">\n<p style=\"margin:0;font-size:12px;color:#8a8a8a;line-height:1.5;\">Sélection générée par ton workflow n8n + Claude. Pour ajuster les sources ou le ton, édite le workflow dans n8n.</p>\n</td></tr></table></td></tr></table></body></html>`;\n\nreturn [{ json: { html, sujet: `Ta veille du ${dateCourte} — ${(data.articles || []).length} pépites` } }];"
       },
       "id": "a1000000-0000-0000-0000-000000000008",
       "name": "Construire l'email",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1780, 300]
+      "position": [
+        1780,
+        300
+      ]
     },
     {
       "parameters": {
@@ -131,7 +155,10 @@
       "name": "Envoyer l'email",
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
-      "position": [2000, 300],
+      "position": [
+        2000,
+        300
+      ],
       "credentials": {
         "gmailOAuth2": {
           "id": "REPLACE_WITH_GMAIL_CREDENTIAL_ID",
@@ -142,28 +169,92 @@
   ],
   "connections": {
     "Chaque matin 7h00": {
-      "main": [[{ "node": "Liste des sources", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Liste des sources",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Liste des sources": {
-      "main": [[{ "node": "Une ligne par source", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Une ligne par source",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Une ligne par source": {
-      "main": [[{ "node": "Lire le flux RSS", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Lire le flux RSS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Lire le flux RSS": {
-      "main": [[{ "node": "Filtrer 24h + nettoyer", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Filtrer 24h + nettoyer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Filtrer 24h + nettoyer": {
-      "main": [[{ "node": "Dédupliquer", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Dédupliquer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Dédupliquer": {
-      "main": [[{ "node": "Claude - Curation", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Claude - Curation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Claude - Curation": {
-      "main": [[{ "node": "Construire l'email", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Construire l'email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Construire l'email": {
-      "main": [[{ "node": "Envoyer l'email", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Envoyer l'email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "pinData": {},
