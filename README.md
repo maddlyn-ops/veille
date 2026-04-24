@@ -186,7 +186,7 @@ Leviers rapides :
 
 ## Passer en Phase 2 (lire les newsletters Gmail sans RSS)
 
-Certaines de tes sources (UX Pilot, The Product Crew, Tech Trash) n'ont pas de RSS. En Phase 2, on ajoutera un nœud **Gmail → Get Many Messages** filtré sur un label, pour intégrer ces emails directement. Dis-moi quand tu veux qu'on s'y mette.
+Certaines sources (Design Systems Weekly, Supernova, The Rundown AI, Thiga, Superhuman AI, NoCode France…) n'ont pas de RSS fiable. En Phase 2, on ajoutera un nœud **Gmail → Get Many Messages** filtré sur un label dédié (genre `veille`), pour intégrer ces emails directement dans le flux. Dis-moi quand tu veux qu'on s'y mette.
 
 ---
 
