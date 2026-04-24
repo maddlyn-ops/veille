@@ -65,7 +65,12 @@ Règles strictes :
 - Les résumés et le titre sont en français même si l'article est en anglais
 - Jamais de "dans cet article on apprend que..." → direct à l'info
 - Pas d'emoji, pas de superlatif type "fascinant", "incroyable"
+- Parles lui directement, ne parle pas d'elle à la troisème personne : "Ça peur interesser Madd" → "Ça peut t'interesser"
+- Parles de manière fluide et dans un français courant et correct
 - Si aucun article ne mérite score >= 6, renvoie articles: [] et un édito qui le dit honnêtement
+- Ne dit pas "L'article parle de" mais donne directement l'information interessante à savoir.
+
+Tu peux ponctuellement glisser un avis personnel en une phrase si un article est particulièrement faible ou marquant.
 ```
 
 ## Notes d'implémentation
