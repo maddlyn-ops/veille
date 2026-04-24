@@ -18,7 +18,7 @@
       "typeVersion": 1.2,
       "position": [
         240,
-        300
+        400
       ]
     },
     {
@@ -72,21 +72,21 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1120,
+        1100,
         300
       ]
     },
     {
       "parameters": {
-        "jsCode": "// Déduplique par URL, limite à 80 articles max pour maîtriser le coût Claude\nconst seen = new Set();\nconst articles = [];\n\nfor (const item of $input.all()) {\n  const url = item.json.url;\n  if (!url || seen.has(url)) continue;\n  seen.add(url);\n  articles.push(item.json);\n  if (articles.length >= 80) break;\n}\n\nreturn [{ json: { articles, nb: articles.length, date: new Date().toISOString().slice(0, 10) } }];"
+        "jsCode": "// Déduplique par URL (ou source+titre si pas d'URL), limite à 80 articles max\nconst seen = new Set();\nconst articles = [];\n\nfor (const item of $input.all()) {\n  const a = item.json;\n  if (!a || !a.titre) continue;\n  const cle = a.url && a.url.length > 0 ? a.url : `${a.source}::${a.titre}`;\n  if (seen.has(cle)) continue;\n  seen.add(cle);\n  articles.push(a);\n  if (articles.length >= 80) break;\n}\n\nreturn [{ json: { articles, nb: articles.length, date: new Date().toISOString().slice(0, 10) } }];"
       },
       "id": "a1000000-0000-0000-0000-000000000006",
       "name": "Dédupliquer",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1340,
-        300
+        1460,
+        400
       ]
     },
     {
@@ -120,8 +120,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1560,
-        300
+        1660,
+        400
       ],
       "credentials": {
         "httpHeaderAuth": {
@@ -139,8 +139,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1780,
-        300
+        1860,
+        400
       ]
     },
     {
@@ -156,8 +156,8 @@
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
       "position": [
-        2000,
-        300
+        2060,
+        400
       ],
       "credentials": {
         "gmailOAuth2": {
@@ -165,6 +165,98 @@
           "name": "Gmail maddworkflow"
         }
       }
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "getAll",
+        "returnAll": false,
+        "limit": 50,
+        "simple": false,
+        "filters": {
+          "q": "label:veille in:inbox newer_than:7d"
+        }
+      },
+      "id": "a1000000-0000-0000-0000-000000000010",
+      "name": "Gmail - Récupérer newsletters",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        460,
+        500
+      ],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "REPLACE_WITH_GMAIL_CREDENTIAL_ID",
+          "name": "Gmail maddworkflow"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Transforme les newsletters Gmail en articles compatibles avec le flux RSS\nconst items = $input.all();\n\nreturn items.map(item => {\n  const email = item.json;\n\n  // Nom d'expéditeur\n  const fromRaw = email.from || {};\n  const sourceName = fromRaw.value?.[0]?.name || fromRaw.text || fromRaw.value?.[0]?.address || 'Newsletter';\n\n  // Corps texte : priorité au text brut, sinon strip du HTML\n  let corps = '';\n  if (email.text) {\n    corps = email.text;\n  } else if (email.html) {\n    corps = email.html.replace(/<style[^>]*>[\\s\\S]*?<\\/style>/gi, '')\n                      .replace(/<script[^>]*>[\\s\\S]*?<\\/script>/gi, '')\n                      .replace(/<[^>]+>/g, ' ');\n  } else {\n    corps = email.snippet || '';\n  }\n  corps = corps.replace(/\\s+/g, ' ').trim().slice(0, 1800);\n\n  // Essaie d'extraire une URL \"view in browser\" / premier lien http du body\n  const htmlBody = email.html || '';\n  const urlMatch = htmlBody.match(/href=[\"'](https?:\\/\\/[^\"']+)[\"']/i);\n  const url = urlMatch ? urlMatch[1] : '';\n\n  return {\n    json: {\n      titre: (email.subject || '(sans sujet)').trim(),\n      url: url,\n      description: corps,\n      date: email.date || email.internalDate || new Date().toISOString(),\n      source: `📧 ${sourceName}`\n    }\n  };\n});"
+      },
+      "id": "a1000000-0000-0000-0000-000000000011",
+      "name": "Parser newsletters Gmail",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        680,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "append",
+        "options": {}
+      },
+      "id": "a1000000-0000-0000-0000-000000000012",
+      "name": "Fusionner RSS + Gmail",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        1280,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Récupère les IDs des newsletters Gmail traitées, pour archivage après envoi\nconst gmailItems = $('Gmail - Récupérer newsletters').all();\n\nreturn gmailItems\n  .filter(item => item.json && item.json.id)\n  .map(item => ({ json: { id: item.json.id } }));"
+      },
+      "id": "a1000000-0000-0000-0000-000000000013",
+      "name": "IDs Gmail à archiver",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2220,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "removeLabels",
+        "messageId": "={{ $json.id }}",
+        "labelIds": [
+          "INBOX"
+        ]
+      },
+      "id": "a1000000-0000-0000-0000-000000000014",
+      "name": "Gmail - Archiver newsletters",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        2440,
+        300
+      ],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "REPLACE_WITH_GMAIL_CREDENTIAL_ID",
+          "name": "Gmail maddworkflow"
+        }
+      },
+      "continueOnFail": true
     }
   ],
   "connections": {
@@ -173,6 +265,11 @@
         [
           {
             "node": "Liste des sources",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Gmail - Récupérer newsletters",
             "type": "main",
             "index": 0
           }
@@ -216,6 +313,39 @@
       "main": [
         [
           {
+            "node": "Fusionner RSS + Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail - Récupérer newsletters": {
+      "main": [
+        [
+          {
+            "node": "Parser newsletters Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parser newsletters Gmail": {
+      "main": [
+        [
+          {
+            "node": "Fusionner RSS + Gmail",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Fusionner RSS + Gmail": {
+      "main": [
+        [
+          {
             "node": "Dédupliquer",
             "type": "main",
             "index": 0
@@ -255,6 +385,28 @@
           }
         ]
       ]
+    },
+    "Envoyer l'email": {
+      "main": [
+        [
+          {
+            "node": "IDs Gmail à archiver",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IDs Gmail à archiver": {
+      "main": [
+        [
+          {
+            "node": "Gmail - Archiver newsletters",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "pinData": {},
@@ -265,7 +417,7 @@
   "active": false,
   "versionId": "1.0.0",
   "meta": {
-    "description": "Veille quotidienne : lit ~15 flux RSS, Claude filtre + résume, envoi email à 7h"
+    "description": "Phase 2 : lit RSS + newsletters Gmail (label 'veille'), Claude filtre + résume, envoi email, archive les newsletters traitées."
   },
   "tags": []
 }

@@ -186,7 +186,70 @@ Leviers rapides :
 
 ## Passer en Phase 2 (lire les newsletters Gmail sans RSS)
 
-Certaines sources (Design Systems Weekly, Supernova, The Rundown AI, Thiga, Superhuman AI, NoCode France…) n'ont pas de RSS fiable. En Phase 2, on ajoutera un nœud **Gmail → Get Many Messages** filtré sur un label dédié (genre `veille`), pour intégrer ces emails directement dans le flux. Dis-moi quand tu veux qu'on s'y mette.
+Phase 2 **activée** : le workflow lit maintenant une **branche Gmail en parallèle** du flux RSS, intègre les newsletters au tri Claude, et les **archive automatiquement** après envoi de ta veille.
+
+### Comment ça s'articule
+
+```
+  ⏰ 7h                    📰 RSS (25 sources) ─────┐
+ trigger  ─────┬─>                                    ├─> Fusionner → Dédup → Claude → HTML → Envoyer
+               └─> 📧 Gmail label "veille" ──────────┘                                            │
+                                                                                                   ▼
+                                                                          📁 Archiver les newsletters traitées
+```
+
+### Setup Gmail (à faire une fois)
+
+**1. Créer le label `veille` dans Gmail**
+- Gmail → menu de gauche → **Créer un libellé** → nomme-le `veille`
+
+**2. Créer un filtre pour chaque newsletter à intégrer**
+
+Pour chaque newsletter que tu veux inclure (Design Systems Weekly, The Rundown AI, Superhuman AI, Thiga, NoCode France, Supernova, etc.) :
+
+1. Ouvre un email de la newsletter dans Gmail
+2. Menu `⋮` (trois points en haut à droite de l'email) → **Filtrer les messages similaires**
+3. Dans "De :", laisse l'adresse de l'expéditeur (ex : `newsletter@designsystems.surf`)
+4. Clique **Créer un filtre**
+5. Coche **Appliquer le libellé** → choisis `veille`
+6. **Ne coche PAS** "Ignorer la boîte de réception" — il faut qu'ils arrivent en INBOX pour que le workflow les attrape
+7. Optionnel : coche **Appliquer aussi ce filtre à X conversations correspondantes** pour tagger les anciennes
+8. **Créer le filtre**
+
+Répète pour chaque newsletter. Compte 30 secondes par source.
+
+**3. Vérifier la credential Gmail OAuth2**
+
+Le workflow a besoin d'accès **lecture + modification** à ta boîte. Si tu as choisi SMTP pour l'envoi en Phase 1, il faut maintenant **en plus** créer une credential **Gmail OAuth2** :
+1. n8n → **Credentials** → **Add Credential** → **Gmail OAuth2**
+2. **Sign in with Google**, connecte `maddworkflow@gmail.com`, autorise
+3. Sauvegarde
+
+Puis dans le workflow, sélectionne cette credential sur les deux nouveaux nœuds Gmail :
+- **Gmail - Récupérer newsletters**
+- **Gmail - Archiver newsletters**
+
+### Comment ça fonctionne au quotidien
+
+- **7h00** : le workflow lit toutes les newsletters non archivées avec le label `veille` des 7 derniers jours
+- **Parsing** : chaque email devient un "article" avec `source = 📧 Nom de l'expéditeur`, titre = objet du mail, description = début du corps (1800 caractères)
+- **Fusion** : RSS + Gmail sont mergés et passent ensemble au nœud Claude
+- **Après envoi** : les newsletters traitées sont archivées (label `INBOX` retiré). Elles restent accessibles via le label `veille` si tu veux les relire.
+
+### Points d'attention
+
+- **Si l'étape Claude ou l'envoi plante** : les newsletters ne sont **pas** archivées. Elles seront ré-essayées au prochain run. C'est voulu.
+- **Si un email fetché n'a pas pu être parsé proprement** : il est quand même archivé (on n'ajoute pas de complexité pour le rattraper — les doublons futurs sont rares).
+- **Requête Gmail** : `label:veille in:inbox newer_than:7d` (éditable dans le nœud "Gmail - Récupérer newsletters" → champ "q")
+- **Volume** : limite à 50 newsletters par exécution, largement suffisant
+
+### Si tu veux un audit plus strict
+
+Au lieu d'archiver (remove INBOX), tu peux ajouter un label `veille/traité` à la place. Ouvre le nœud **Gmail - Archiver newsletters** :
+- Remplace `removeLabels` par `addLabels`
+- Remplace `INBOX` par le nom/ID de ton label `veille/traité` (à créer au préalable)
+
+Ça garde les mails en inbox mais évite de les retraiter (en ajustant aussi la requête de fetch).
 
 ---
 
