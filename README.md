@@ -218,14 +218,13 @@ Pour chaque newsletter que tu veux inclure (Design Systems Weekly, The Rundown A
 
 Répète pour chaque newsletter. Compte 30 secondes par source.
 
-**3. Vérifier la credential Gmail OAuth2**
+**3. Créer / vérifier la credential Gmail OAuth2**
 
-Le workflow a besoin d'accès **lecture + modification** à ta boîte. Si tu as choisi SMTP pour l'envoi en Phase 1, il faut maintenant **en plus** créer une credential **Gmail OAuth2** :
-1. n8n → **Credentials** → **Add Credential** → **Gmail OAuth2**
-2. **Sign in with Google**, connecte `maddworkflow@gmail.com`, autorise
-3. Sauvegarde
+Le workflow a besoin d'accès **lecture + modification** à ta boîte. Si tu as choisi SMTP pour l'envoi en Phase 1, il te faut maintenant **en plus** une credential **Gmail OAuth2** — c'est obligatoire, SMTP ne permet que d'envoyer.
 
-Puis dans le workflow, sélectionne cette credential sur les deux nouveaux nœuds Gmail :
+👉 Le setup OAuth2 est un peu technique (projet Google Cloud, écran de consentement, ID client). C'est détaillé **pas à pas dans l'annexe en fin de document** : [Annexe — Configurer Gmail OAuth2](#annexe--configurer-gmail-oauth2).
+
+Une fois la credential créée, sélectionne-la sur les deux nouveaux nœuds Gmail :
 - **Gmail - Récupérer newsletters**
 - **Gmail - Archiver newsletters**
 
@@ -250,6 +249,113 @@ Au lieu d'archiver (remove INBOX), tu peux ajouter un label `veille/traité` à 
 - Remplace `INBOX` par le nom/ID de ton label `veille/traité` (à créer au préalable)
 
 Ça garde les mails en inbox mais évite de les retraiter (en ajustant aussi la requête de fetch).
+
+---
+
+# 🔐 Annexe — Configurer Gmail OAuth2
+
+Procédure complète pour créer une credential Gmail OAuth2 dans n8n. Compte **10-15 minutes** la première fois.
+
+## Le principe
+
+Une credential "Gmail OAuth2" c'est une **autorisation signée** qui dit à Google : "Ce n8n a le droit de lire et modifier les mails de `maddworkflow@gmail.com`". Google exige que tu crées une "app" sur Google Cloud Console pour générer cette autorisation — c'est gratuit.
+
+## Étapes
+
+### 1. Créer un projet Google Cloud
+
+1. Va sur [console.cloud.google.com](https://console.cloud.google.com) (connecte-toi avec `maddworkflow@gmail.com`)
+2. En haut à gauche à côté du logo → sélecteur de projet → **Nouveau projet**
+3. Nom : `n8n-veille` → **Créer**
+4. Attends 10-20 secondes, puis sélectionne le projet
+
+### 2. Activer l'API Gmail
+
+1. Menu burger (☰) → **APIs et services** → **Bibliothèque**
+2. Cherche `Gmail API` → clique → **Activer**
+
+### 3. Configurer l'écran de consentement
+
+1. Menu burger → **APIs et services** → **Écran de consentement OAuth**
+2. Type d'utilisateur : **Externe** → **Créer**
+3. Remplis le minimum :
+   - **Nom de l'application** : `n8n veille`
+   - **Email d'assistance utilisateur** : `maddworkflow@gmail.com`
+   - **Coordonnées du développeur** : `maddworkflow@gmail.com`
+4. **Enregistrer et continuer**
+5. **Niveaux d'accès** → **Ajouter ou supprimer des champs d'application** → coche :
+   - `.../auth/gmail.modify` (lire, envoyer, modifier — **sans** supprimer)
+   - `.../auth/gmail.labels`
+6. **Mettre à jour** → **Enregistrer et continuer**
+7. **Utilisateurs test** → **Ajouter des utilisateurs** → ajoute `maddworkflow@gmail.com`
+   > ⚠️ **Étape critique** : sans ça, tu auras une erreur `access_denied` à l'authentification.
+8. **Enregistrer et continuer** → **Retour au tableau de bord**
+
+> 🔒 L'app reste en **mode test** — aucun souci, ça marche très bien pour un usage perso. Pas besoin de vérification Google.
+
+### 4. Créer les identifiants OAuth 2.0
+
+1. Menu burger → **APIs et services** → **Identifiants**
+2. En haut → **Créer des identifiants** → **ID client OAuth**
+3. **Type d'application** : `Application Web`
+4. **Nom** : `n8n veille client`
+5. **URI de redirection autorisés** → laisse vide pour l'instant (on reviendra)
+6. **Créer**
+7. Une modale affiche :
+   - **ID client** (format `xxxxxxxx.apps.googleusercontent.com`)
+   - **Code secret du client** (format `GOCSPX-...`)
+8. **Copie les deux** dans un bloc-notes
+
+### 5. Créer la credential dans n8n
+
+1. Dans n8n → **Credentials** → **Add Credential**
+2. Cherche **Gmail OAuth2 API**
+3. Colle :
+   - **Client ID** = l'ID client Google
+   - **Client Secret** = le code secret Google
+4. n8n affiche une **OAuth Redirect URL** en bas (type `https://ton-n8n.domaine.fr/rest/oauth2-credential/callback`) → **copie-la**
+
+### 6. Ajouter l'URL de redirection côté Google
+
+1. Retourne sur [Google Cloud Console → Identifiants](https://console.cloud.google.com/apis/credentials)
+2. Clique sur ton **ID client OAuth** (icône crayon pour éditer)
+3. **URI de redirection autorisés** → **Ajouter un URI** → colle l'URL copiée depuis n8n
+4. **Enregistrer**
+
+### 7. Lier le compte dans n8n
+
+1. Retourne dans n8n sur ta credential Gmail OAuth2
+2. Clique **Sign in with Google**
+3. Popup Google → choisis `maddworkflow@gmail.com`
+4. ⚠️ Écran **"Google n'a pas vérifié cette application"** → **Paramètres avancés** → **Accéder à n8n veille (non sécurisé)** → accepte les permissions
+5. La popup se ferme, n8n affiche ✅ **Account connected**
+6. **Save**
+
+C'est prêt. Tu peux maintenant sélectionner cette credential dans les 3 nœuds Gmail du workflow.
+
+## Pièges classiques
+
+| Erreur | Cause | Solution |
+|---|---|---|
+| `Error 403: access_denied` | Compte pas dans "Utilisateurs test" | Étape 3.7 : ajoute `maddworkflow@gmail.com` |
+| `redirect_uri_mismatch` | URL de redirection pas copiée exactement | Étape 6 : recopie depuis n8n, attention aux `/` finaux |
+| `This app isn't verified` | Normal en mode test | Clique "Paramètres avancés" → accéder quand même |
+| `invalid_grant` après 7 jours | Refresh token expiré en mode test | Re-clique "Sign in with Google" dans la credential |
+
+## Le souci du refresh token de 7 jours
+
+En **mode test**, les refresh tokens Google expirent après **7 jours** → il faut re-authentifier la credential chaque semaine, sinon le workflow plante.
+
+Deux options pour éviter ça :
+
+**Option A — Publier l'app** (recommandé pour usage perso)
+1. Google Cloud Console → **Écran de consentement OAuth** → **Publier l'application**
+2. Google te demande une vérification uniquement si tu dépasses 100 utilisateurs ou si tu utilises des scopes "restricted"
+3. Pour notre cas (`gmail.modify` + `gmail.labels`, mode perso), tu peux publier sans vérification → refresh token valide sans expiration
+
+**Option B — Rester en test** et re-connecter toutes les semaines (pénible).
+
+Je conseille l'Option A dès que tu as validé que le workflow tourne bien.
 
 ---
 
