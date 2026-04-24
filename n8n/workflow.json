@@ -20,22 +20,12 @@
     },
     {
       "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "id": "src-list",
-              "name": "sources",
-              "value": "=[\n  {\"nom\": \"Lenny's Newsletter\", \"url\": \"https://www.lennysnewsletter.com/feed\"},\n  {\"nom\": \"One Useful Thing (Ethan Mollick)\", \"url\": \"https://www.oneusefulthing.org/feed\"},\n  {\"nom\": \"The Beautiful Mess (John Cutler)\", \"url\": \"https://cutlefish.substack.com/feed\"},\n  {\"nom\": \"UX Collective\", \"url\": \"https://uxdesign.cc/feed\"},\n  {\"nom\": \"Dense Discovery\", \"url\": \"https://www.densediscovery.com/feed\"},\n  {\"nom\": \"Growth.Design\", \"url\": \"https://growth.design/feed\"},\n  {\"nom\": \"The Looking Glass (Julie Zhuo)\", \"url\": \"https://lookingglass.substack.com/feed\"},\n  {\"nom\": \"Brad Frost\", \"url\": \"https://bradfrost.com/blog/feed/\"},\n  {\"nom\": \"Every (Dan Shipper)\", \"url\": \"https://every.to/feed.xml\"},\n  {\"nom\": \"Ben's Bites\", \"url\": \"https://bensbites.beehiiv.com/feed\"},\n  {\"nom\": \"Latent Space (swyx)\", \"url\": \"https://www.latent.space/feed\"},\n  {\"nom\": \"Interconnected (Matt Webb)\", \"url\": \"https://interconnected.org/home/feed\"},\n  {\"nom\": \"Platformer (Casey Newton)\", \"url\": \"https://www.platformer.news/feed\"},\n  {\"nom\": \"Import AI (Jack Clark)\", \"url\": \"https://jack-clark.net/feed/\"},\n  {\"nom\": \"Maggie Appleton\", \"url\": \"https://maggieappleton.com/rss.xml\"},\n  {\"nom\": \"Simon Willison\", \"url\": \"https://simonwillison.net/atom/everything/\"},\n  {\"nom\": \"Reforge Blog\", \"url\": \"https://www.reforge.com/blog/rss.xml\"},\n  {\"nom\": \"Zapier Blog\", \"url\": \"https://zapier.com/blog/feeds/latest/\"},\n  {\"nom\": \"Graphism (Geoffrey Dorne)\", \"url\": \"https://graphism.fr/feed/\"},\n  {\"nom\": \"r/UXDesign\", \"url\": \"https://www.reddit.com/r/UXDesign/top/.rss?t=day\"},\n  {\"nom\": \"r/ProductManagement\", \"url\": \"https://www.reddit.com/r/ProductManagement/top/.rss?t=day\"},\n  {\"nom\": \"r/DesignSystems\", \"url\": \"https://www.reddit.com/r/DesignSystems/top/.rss?t=day\"},\n  {\"nom\": \"r/Figma\", \"url\": \"https://www.reddit.com/r/Figma/top/.rss?t=day\"},\n  {\"nom\": \"r/ClaudeAI\", \"url\": \"https://www.reddit.com/r/ClaudeAI/top/.rss?t=day\"},\n  {\"nom\": \"r/n8n\", \"url\": \"https://www.reddit.com/r/n8n/top/.rss?t=day\"}\n]",
-              "type": "array"
-            }
-          ]
-        },
-        "options": {}
+        "jsCode": "const sources = [\n  { nom: \"Lenny's Newsletter\", url: \"https://www.lennysnewsletter.com/feed\" },\n  { nom: \"One Useful Thing (Ethan Mollick)\", url: \"https://www.oneusefulthing.org/feed\" },\n  { nom: \"The Beautiful Mess (John Cutler)\", url: \"https://cutlefish.substack.com/feed\" },\n  { nom: \"UX Collective\", url: \"https://uxdesign.cc/feed\" },\n  { nom: \"Dense Discovery\", url: \"https://www.densediscovery.com/feed\" },\n  { nom: \"Growth.Design\", url: \"https://growth.design/feed\" },\n  { nom: \"The Looking Glass (Julie Zhuo)\", url: \"https://lookingglass.substack.com/feed\" },\n  { nom: \"Brad Frost\", url: \"https://bradfrost.com/blog/feed/\" },\n  { nom: \"Every (Dan Shipper)\", url: \"https://every.to/feed.xml\" },\n  { nom: \"Ben's Bites\", url: \"https://bensbites.beehiiv.com/feed\" },\n  { nom: \"Latent Space (swyx)\", url: \"https://www.latent.space/feed\" },\n  { nom: \"Interconnected (Matt Webb)\", url: \"https://interconnected.org/home/feed\" },\n  { nom: \"Platformer (Casey Newton)\", url: \"https://www.platformer.news/feed\" },\n  { nom: \"Import AI (Jack Clark)\", url: \"https://jack-clark.net/feed/\" },\n  { nom: \"Maggie Appleton\", url: \"https://maggieappleton.com/rss.xml\" },\n  { nom: \"Simon Willison\", url: \"https://simonwillison.net/atom/everything/\" },\n  { nom: \"Reforge Blog\", url: \"https://www.reforge.com/blog/rss.xml\" },\n  { nom: \"Zapier Blog\", url: \"https://zapier.com/blog/feeds/latest/\" },\n  { nom: \"Graphism (Geoffrey Dorne)\", url: \"https://graphism.fr/feed/\" },\n  { nom: \"r/UXDesign\", url: \"https://www.reddit.com/r/UXDesign/top/.rss?t=day\" },\n  { nom: \"r/ProductManagement\", url: \"https://www.reddit.com/r/ProductManagement/top/.rss?t=day\" },\n  { nom: \"r/DesignSystems\", url: \"https://www.reddit.com/r/DesignSystems/top/.rss?t=day\" },\n  { nom: \"r/Figma\", url: \"https://www.reddit.com/r/Figma/top/.rss?t=day\" },\n  { nom: \"r/ClaudeAI\", url: \"https://www.reddit.com/r/ClaudeAI/top/.rss?t=day\" },\n  { nom: \"r/n8n\", url: \"https://www.reddit.com/r/n8n/top/.rss?t=day\" }\n];\n\nreturn [{ json: { sources } }];"
       },
       "id": "a1000000-0000-0000-0000-000000000002",
       "name": "Liste des sources",
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
       "position": [460, 300]
     },
     {
