@@ -122,7 +122,13 @@
       "position": [
         1660,
         400
-      ]
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "",
+          "name": "Anthropic API key"
+        }
+      }
     },
     {
       "parameters": {
@@ -152,7 +158,13 @@
       "position": [
         2060,
         400
-      ]
+      ],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "",
+          "name": "Gmail OAuth2"
+        }
+      }
     },
     {
       "parameters": {
@@ -173,7 +185,13 @@
         460,
         500
       ],
-      "continueOnFail": true
+      "continueOnFail": true,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "",
+          "name": "Gmail OAuth2"
+        }
+      }
     },
     {
       "parameters": {
@@ -232,7 +250,13 @@
         2440,
         300
       ],
-      "continueOnFail": true
+      "continueOnFail": true,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "",
+          "name": "Gmail OAuth2"
+        }
+      }
     }
   ],
   "connections": {
