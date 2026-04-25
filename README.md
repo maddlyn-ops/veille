@@ -186,7 +186,9 @@ Leviers rapides :
 
 ## Passer en Phase 2 (lire les newsletters Gmail sans RSS)
 
-Phase 2 **activée** : le workflow lit maintenant une **branche Gmail en parallèle** du flux RSS, intègre les newsletters au tri Claude, et les **archive automatiquement** après envoi de ta veille.
+> ⚠️ **MODE TEMPORAIRE ACTIF** : la branche Gmail est actuellement **désactivée** dans le workflow (compte Gmail bloqué temporairement par Google). L'envoi se fait via **Resend** au lieu de Gmail. Voir la section [🔁 Mode dégradé Resend](#-mode-dégradé-resend-quand-gmail-est-bloqué) plus bas pour les détails et le retour à Gmail.
+
+Phase 2 **activée** : le workflow lit normalement une **branche Gmail en parallèle** du flux RSS, intègre les newsletters au tri Claude, et les **archive automatiquement** après envoi de ta veille.
 
 ### Comment ça s'articule
 
@@ -249,6 +251,107 @@ Au lieu d'archiver (remove INBOX), tu peux ajouter un label `veille/traité` à 
 - Remplace `INBOX` par le nom/ID de ton label `veille/traité` (à créer au préalable)
 
 Ça garde les mails en inbox mais évite de les retraiter (en ajustant aussi la requête de fetch).
+
+---
+
+# 🔁 Mode dégradé Resend (quand Gmail est bloqué)
+
+> Mode actif tant que `maddworkflow@gmail.com` n'est pas débloqué par Google.
+
+## Pourquoi
+
+Google verrouille parfois les comptes Gmail récents qui font de l'OAuth — un déblocage prend généralement 24-72h, mais ça peut traîner. En attendant, on remplace Gmail par **Resend**, un service email transactionnel gratuit (3000 mails/mois) qui n'a aucun lien avec Gmail.
+
+## Ce que ça change dans le workflow
+
+```
+Avant (Gmail) :
+  ⏰ → RSS + Gmail Récup → Fusion → Dédup → Claude → HTML → Gmail Send → Archive
+                                                                           Gmail
+Maintenant (Resend) :
+  ⏰ → RSS ──────────────────────► Dédup → Claude → HTML → Resend HTTP
+
+  (les nœuds Gmail Récup/Parser/Fusion/IDs/Archiver restent dans le canvas
+   mais déconnectés — easy à reconnecter quand le compte revient)
+```
+
+## Setup Resend (10 min, à faire une fois)
+
+### 1. Créer le compte Resend
+
+1. Va sur [resend.com/signup](https://resend.com/signup)
+2. Inscris-toi avec **`fuzier.maddlyn@gmail.com`** (l'email où tu veux recevoir la veille)
+3. Vérifie ton email (clic sur le lien reçu)
+
+> 🔑 **Important** : sans configurer un domaine custom, Resend gratuit n'autorise l'envoi **que vers l'email de ton compte Resend**. C'est pour ça qu'on utilise `fuzier.maddlyn@gmail.com` à la fois comme compte Resend et comme destinataire.
+
+### 2. Récupérer la clé API
+
+1. Dans Resend → menu de gauche → **API Keys**
+2. **Create API Key**
+3. Nom : `n8n veille` · Permission : **Full access** · Domain : *None* (ou sélectionne par défaut)
+4. **Add**
+5. Copie la clé qui commence par `re_...` → garde-la sous le coude (Resend ne te la remontrera pas)
+
+### 3. Créer la credential dans n8n
+
+1. n8n → **Credentials** → **Add Credential**
+2. Cherche **Header Auth**
+3. Remplis :
+   - **Name** : `Resend API key` *(exactement, pour matcher le workflow)*
+   - **Header Name** : `Authorization`
+   - **Header Value** : `Bearer re_XXXXXXXXXX` *(remplace par ta clé, garde le `Bearer ` devant avec un espace)*
+4. **Save**
+
+### 4. Re-importer le workflow
+
+Comme d'habitude :
+1. Télécharge la dernière version de `n8n/workflow.json` depuis le repo
+2. Dans n8n, supprime ou renomme l'ancien workflow → **Add workflow** → **Import from File**
+3. Vérifie que :
+   - Le nœud **Envoyer l'email** est bien un HTTP Request (pas Gmail)
+   - Sa credential `Resend API key` est auto-sélectionnée
+   - Le nœud **Claude - Curation** a sa credential `Anthropic API key` auto-sélectionnée
+4. **Save** (Ctrl+S)
+5. **Execute Workflow** → tu devrais recevoir la veille sur `fuzier.maddlyn@gmail.com` en quelques secondes
+
+### Détail du nœud Resend
+
+Le nœud HTTP Request envoie ce body à `https://api.resend.com/emails` :
+
+```json
+{
+  "from": "Jean-Pierre <onboarding@resend.dev>",
+  "to": "fuzier.maddlyn@gmail.com",
+  "subject": "Ta veille du ...",
+  "html": "..."
+}
+```
+
+L'expéditeur affiché sera **Jean-Pierre** (modifiable dans le `jsonBody` du nœud).
+
+## Revenir à Gmail quand le compte est débloqué
+
+Quand `maddworkflow@gmail.com` refonctionne :
+
+1. Vérifie que ta credential **Gmail OAuth2** dans n8n est toujours valide (ré-authentifie si besoin)
+2. Reconnecte les fils dans le canvas n8n :
+   - **Chaque matin 7h00** → **Gmail - Récupérer newsletters** *(en plus de Liste des sources)*
+   - **Filtrer 24h + nettoyer** → **Fusionner RSS + Gmail** *(input 0)*
+   - **Fusionner RSS + Gmail** → **Dédupliquer** *(et supprimer la connexion directe Filtrer→Dédup)*
+   - **Envoyer l'email** → **IDs Gmail à archiver**
+3. Re-transforme **Envoyer l'email** d'HTTP Request vers Gmail node :
+   - Plus simple : supprime le nœud HTTP Request, ajoute un nouveau nœud **Gmail Send Email** à la place, configure-le avec ta credential Gmail OAuth2 et les expressions `={{ $json.sujet }}` / `={{ $json.html }}`
+4. **Save**, teste, réactive le cron
+
+> 💡 Si tu veux je te referai un commit qui te file le workflow.json en mode "tout Gmail" prêt à importer le moment venu.
+
+## Limitations du mode dégradé
+
+- ❌ Pas de lecture des newsletters via label `veille` (les newsletters reçues pendant ce temps ne seront pas dans la veille)
+- ❌ Pas d'archivage automatique des emails
+- ✅ Tout le reste fonctionne (RSS, Claude, email)
+- ✅ La veille arrive dans `fuzier.maddlyn@gmail.com` chaque matin à 7h
 
 ---
 

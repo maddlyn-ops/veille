@@ -145,24 +145,38 @@
     },
     {
       "parameters": {
-        "sendTo": "maddworkflow@gmail.com",
-        "subject": "={{ $json.sujet }}",
-        "emailType": "html",
-        "message": "={{ $json.html }}",
-        "options": {}
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"from\": \"Jean-Pierre <onboarding@resend.dev>\",\n  \"to\": \"fuzier.maddlyn@gmail.com\",\n  \"subject\": {{ JSON.stringify($json.sujet) }},\n  \"html\": {{ JSON.stringify($json.html) }}\n}",
+        "options": {
+          "timeout": 30000
+        }
       },
       "id": "a1000000-0000-0000-0000-000000000009",
       "name": "Envoyer l'email",
-      "type": "n8n-nodes-base.gmail",
-      "typeVersion": 2.1,
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
       "position": [
         2060,
         400
       ],
       "credentials": {
-        "gmailOAuth2": {
+        "httpHeaderAuth": {
           "id": "",
-          "name": "Gmail OAuth2"
+          "name": "Resend API key"
         }
       }
     },
@@ -267,11 +281,6 @@
             "node": "Liste des sources",
             "type": "main",
             "index": 0
-          },
-          {
-            "node": "Gmail - Récupérer newsletters",
-            "type": "main",
-            "index": 0
           }
         ]
       ]
@@ -313,7 +322,7 @@
       "main": [
         [
           {
-            "node": "Fusionner RSS + Gmail",
+            "node": "Dédupliquer",
             "type": "main",
             "index": 0
           }
@@ -386,17 +395,6 @@
         ]
       ]
     },
-    "Envoyer l'email": {
-      "main": [
-        [
-          {
-            "node": "IDs Gmail à archiver",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "IDs Gmail à archiver": {
       "main": [
         [
@@ -417,7 +415,7 @@
   "active": false,
   "versionId": "1.0.0",
   "meta": {
-    "description": "Phase 2 : lit RSS + newsletters Gmail (label 'veille'), Claude filtre + résume, envoi email, archive les newsletters traitées."
+    "description": "MODE TEMPORAIRE : envoi via Resend (HTTP). Branche Gmail désactivée en attendant le déblocage du compte. Pour réactiver Phase 2 : reconnecter Schedule->Gmail Récupérer, Filtrer 24h->Fusionner (input 0), Fusionner->Dédupliquer, Envoyer->IDs Gmail à archiver, et reswapper Envoyer en nœud Gmail."
   },
   "tags": []
 }
